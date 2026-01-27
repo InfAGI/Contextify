@@ -47,7 +47,7 @@ class ToolKit:
         self.tool_callbacks[tool.tool_name] = tool.tool_callback
 
     def get_tool_schemas(self):
-        return self.tool_schemas.values()
+        return self.tool_schemas
 
     def execute_tool(self, tool_call: ToolCall):
         if tool_call.tool_name not in self.tool_names:
