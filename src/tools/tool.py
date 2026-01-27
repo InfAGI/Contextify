@@ -1,4 +1,5 @@
-from typing import Type, Callable, List
+import json
+from typing import Type, Callable, List, Dict
 from pydantic import BaseModel, Field
 
 
@@ -10,7 +11,7 @@ class ToolCall(BaseModel):
 class ToolSpec(BaseModel):
     tool_name: str
     tool_desc: str
-    tool_args: Type[BaseModel]
+    tool_args: Type[BaseModel] | Dict
     tool_callback: Callable
 
     @property
@@ -20,7 +21,11 @@ class ToolSpec(BaseModel):
             "function": {
                 "name": self.tool_name,
                 "description": self.tool_desc,
-                "parameters": self.tool_args.model_json_schema(),
+                "parameters": (
+                    self.tool_args.model_json_schema()
+                    if isinstance(self.tool_args, BaseModel)
+                    else self.tool_args
+                ),
             },
         }
 
@@ -49,14 +54,18 @@ class ToolKit:
             return f"The tool name {tool_call.tool_name} is unavailable. The available tools are: {self.tool_names}"
 
         try:
-            args = self.tool_args[tool_call.tool_name].model_validate_json(
-                tool_call.tool_args
-            )
+            args = self.tool_args[tool_call.tool_name]
+            if isinstance(args, BaseModel):
+                args = args.model_validate_json(tool_call.tool_args)
+            else:
+                args = json.loads(tool_call.tool_args)
         except Exception as e:
             return f"Validating the the tool `{tool_call.tool_name}` with args `{tool_call.tool_args}` failed: {str(e)}"
 
         try:
-            return self.tool_callbacks[tool_call.tool_name](**args.model_dump())
+            return self.tool_callbacks[tool_call.tool_name](
+                **args.model_dump() if isinstance(args, BaseModel) else args
+            )
         except Exception as e:
             return f"Executing the tool `{tool_call.tool_name}` with args `{tool_call.tool_args}` failed: {str(e)}"
 
@@ -92,4 +101,15 @@ if __name__ == "__main__":
     )
     tool_kit.add_tool(tool_spec)
     tool_call = ToolCall(tool_name="add_numbers", tool_args='{"a": 1, "b": 2}')
+    print(tool_kit.execute_tool(tool_call))
+
+    # 添加一个tool_args为dict的tool
+    tool_spec = ToolSpec(
+        tool_name="echo",
+        tool_desc="Echo the input",
+        tool_args={"type": "object", "properties": {"input": {"type": "string"}}},
+        tool_callback=lambda input: f"Echo: {input}",
+    )
+    tool_kit.add_tool(tool_spec)
+    tool_call = ToolCall(tool_name="echo", tool_args='{"input": "hello"}')
     print(tool_kit.execute_tool(tool_call))
