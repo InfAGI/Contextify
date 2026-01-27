@@ -4,11 +4,11 @@ import hashlib
 from openai import OpenAI
 from openai.types.chat.chat_completion import ChatCompletion
 
-from src.base.config import DefaultConfig
+from src.config.config import DefaultConfig
 
 
 def get_deepseek_client(
-    base_url=DefaultConfig.deepseek_api_base,
+    base_url=DefaultConfig.deepseek_base_url,
     api_key=DefaultConfig.deepseek_api_key,
     **kwargs,
 ):
@@ -70,3 +70,18 @@ def get_deepseek_response_with_cache(
         with open(f"{cache_path}/{cache_key}", "w") as f:
             json.dump(response.model_dump(), f)
     return response
+
+
+if __name__ == "__main__":
+    client = get_deepseek_client()
+    response = get_deepseek_response(
+        client,
+        messages=[{"role": "user", "content": "你好"}],
+        tools=[],
+    )
+    # response = get_deepseek_response_with_cache(
+    #     client,
+    #     messages=[{"role": "user", "content": "你好"}],
+    #     tools=[],
+    # )
+    print(response)
