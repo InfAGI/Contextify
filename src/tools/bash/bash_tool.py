@@ -42,8 +42,11 @@ if __name__ == "__main__":
     tool_registry = ToolRegistry()
     tool_registry.add_tool(tool_spec)
 
+    # res = tool_registry.execute_tool(
+    #     ToolCall(tool_name="bash", tool_args='{"command":"pwd"}')
+    # )
     res = tool_registry.execute_tool(
-        ToolCall(tool_name="bash", tool_args='{"command":"pwd"}')
+        ToolCall(tool_name="bash", tool_args='{"command":"cat src/utils/log.py"}')
     )
     print(res)
 

@@ -8,7 +8,7 @@ class BashTerminal:
     def __init__(
         self,
         cwd: str = None,
-        delimiter: str = "<terminal-command-exit>",
+        delimiter: str = f"<terminal-command-exit-{os.urandom(4).hex()}>",
         output_delay: float = 0.2,
         output_timeout: int = 120,
     ):
@@ -45,14 +45,14 @@ class BashTerminal:
                 cwd=self._cwd,
             )
 
-            init_cmd = "$OutputEncoding = [Console]::InputEncoding = [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding;"
-            self._process.stdin.write((init_cmd + "\n").encode("utf-8"))
-            await self._process.stdin.drain()
-            try:
-                self._process.stdout._buffer.clear()
-                self._process.stderr._buffer.clear()
-            except Exception:
-                pass
+            # init_cmd = "$OutputEncoding = [Console]::InputEncoding = [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding;"
+            # self._process.stdin.write((init_cmd + "\n").encode("utf-8"))
+            # await self._process.stdin.drain()
+            # try:
+            #     self._process.stdout._buffer.clear()
+            #     self._process.stderr._buffer.clear()
+            # except Exception:
+            #     pass
 
     async def stop(self):
         if not self._process:
@@ -90,6 +90,9 @@ class BashTerminal:
         if not self._process:
             await self.start()
 
+        output = ""
+        stderr = ""
+
         self._process.stdin.write(self.get_command(cmd).encode("utf-8"))
         await self._process.stdin.drain()
 
@@ -99,9 +102,20 @@ class BashTerminal:
                 while True:
                     await asyncio.sleep(self._output_delay)
 
-                    output = self._process.stdout._buffer.decode()
+                    try:
+                        output = self._process.stdout._buffer.decode("utf-8")
+                    except Exception:
+                        output = self._process.stdout._buffer.decode(
+                            "utf-8", errors="replace"
+                        )
 
-                    stderr = self._process.stderr._buffer.decode()
+                    try:
+                        stderr = self._process.stderr._buffer.decode("utf-8")
+                    except Exception:
+                        stderr = self._process.stderr._buffer.decode(
+                            "utf-8", errors="replace"
+                        )
+
                     if stderr:
                         break
 
@@ -111,7 +125,8 @@ class BashTerminal:
 
         except Exception as e:
             logger.error(f"Execute command: {cmd} with error: {e}")
-            pass
+            if not stderr:
+                stderr = f"{e}"
 
         self._process.stdout._buffer.clear()
         self._process.stderr._buffer.clear()
@@ -137,7 +152,10 @@ if __name__ == "__main__":
             # print(res)
             # res = await terminal.run("cd ..")
             # print(res)
-            res = await terminal.run("pwd && ls -la")
+            # res = await terminal.run("pwd && ls -la")
+            # print(res)
+            # res = await terminal.run("tree /F")
+            res = await terminal.run("cat src/utils/log.py")
             print(res)
         finally:
             await terminal.stop()

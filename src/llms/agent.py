@@ -1,5 +1,8 @@
 import json
-from src.llms.deepseek import get_deepseek_client, get_deepseek_response_with_cache
+from src.llms.deepseek import (
+    get_deepseek_client,
+    get_deepseek_response,
+)
 from src.tools.tool_registry import ToolRegistry
 from src.utils.util import num_tokens
 from src.utils.log import logger
@@ -11,7 +14,7 @@ class Agent:
     def __init__(
         self,
         client=get_deepseek_client(),
-        invoke=get_deepseek_response_with_cache,
+        invoke=get_deepseek_response,
         messages: list = None,
         tools: ToolRegistry = None,
     ):
