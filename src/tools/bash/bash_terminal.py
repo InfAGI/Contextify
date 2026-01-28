@@ -46,6 +46,9 @@ class BashTerminal:
             )
 
     async def stop(self):
+        if not self._process:
+            return
+
         try:
             if self._process.stdin:
                 self._process.stdin.close()
@@ -63,7 +66,7 @@ class BashTerminal:
                 pass
         finally:
             self._process = None
-            logger.info("Bash terminal process cleaned up.")
+            # logger.info("Bash terminal process cleaned up.")
 
     def get_command(self, cmd: str):
         # logger.info(f"Executing command before: {cmd}")
