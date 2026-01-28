@@ -3,6 +3,10 @@ from typing import Type, Callable, List, Dict
 from pydantic import BaseModel, Field
 
 
+def is_pydantic_model(obj):
+    return isinstance(obj, type) and issubclass(obj, BaseModel)
+
+
 class ToolCall(BaseModel):
     tool_name: str
     tool_args: str
@@ -23,7 +27,7 @@ class ToolSpec(BaseModel):
                 "description": self.tool_desc,
                 "parameters": (
                     self.tool_args.model_json_schema()
-                    if isinstance(self.tool_args, BaseModel)
+                    if is_pydantic_model(self.tool_args)
                     else self.tool_args
                 ),
             },
@@ -55,7 +59,7 @@ class ToolKit:
 
         try:
             args = self.tool_args[tool_call.tool_name]
-            if isinstance(args, BaseModel):
+            if is_pydantic_model(args):
                 args = args.model_validate_json(tool_call.tool_args)
             else:
                 args = json.loads(tool_call.tool_args)

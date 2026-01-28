@@ -45,6 +45,15 @@ class BashTerminal:
                 cwd=self._cwd,
             )
 
+            init_cmd = "$OutputEncoding = [Console]::InputEncoding = [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding;"
+            self._process.stdin.write((init_cmd + "\n").encode("utf-8"))
+            await self._process.stdin.drain()
+            try:
+                self._process.stdout._buffer.clear()
+                self._process.stderr._buffer.clear()
+            except Exception:
+                pass
+
     async def stop(self):
         if not self._process:
             return
@@ -92,6 +101,10 @@ class BashTerminal:
 
                     output = self._process.stdout._buffer.decode()
 
+                    stderr = self._process.stderr._buffer.decode()
+                    if stderr:
+                        break
+
                     if self._delimiter in output:
                         output = output[: output.index(self._delimiter)]
                         break
@@ -99,8 +112,6 @@ class BashTerminal:
         except Exception as e:
             logger.error(f"Execute command: {cmd} with error: {e}")
             pass
-
-        stderr = self._process.stderr._buffer.decode()
 
         self._process.stdout._buffer.clear()
         self._process.stderr._buffer.clear()
@@ -120,11 +131,13 @@ if __name__ == "__main__":
         terminal = BashTerminal()
         # terminal = PowerShellTerminal(cwd=initial_dir)
         try:
-            res = await terminal.run("pwd")
-            print(res)
-            res = await terminal.run("ls")
-            print(res)
-            res = await terminal.run("cd ..")
+            # res = await terminal.run("pwd")
+            # print(res)
+            # res = await terminal.run("ls")
+            # print(res)
+            # res = await terminal.run("cd ..")
+            # print(res)
+            res = await terminal.run("pwd && ls -la")
             print(res)
         finally:
             await terminal.stop()
