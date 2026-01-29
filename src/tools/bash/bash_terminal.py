@@ -1,6 +1,5 @@
 import os
 import asyncio
-from src.utils.log import logger
 
 
 class BashTerminal:
@@ -18,73 +17,67 @@ class BashTerminal:
         self._output_timeout = output_timeout
         self._process: asyncio.subprocess.Process = None
 
+    def _get_bash_shell_process(self):
+        return asyncio.create_subprocess_exec(
+            "/bin/bash",
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            cwd=self._cwd,
+            preexec_fn=os.setsid,
+        )
+
+    def _get_powershell_process(self):
+        return asyncio.create_subprocess_exec(
+            "powershell.exe",
+            "-NoLogo",
+            "-NoProfile",
+            "-NoExit",
+            "-Command",
+            "-",
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            cwd=self._cwd,
+        )
+
     async def start(self):
         if self._process:
             return
 
         if os.name != "nt":
-            self._process = await asyncio.create_subprocess_exec(
-                "/bin/bash",
-                stdin=asyncio.subprocess.PIPE,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                cwd=self._cwd,
-                preexec_fn=os.setsid,
-            )
+            self._process = await self._get_bash_shell_process()
         else:
-            self._process = await asyncio.create_subprocess_exec(
-                "powershell.exe",
-                "-NoLogo",
-                "-NoProfile",
-                "-NoExit",
-                "-Command",
-                "-",
-                stdin=asyncio.subprocess.PIPE,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                cwd=self._cwd,
-            )
-
-            # init_cmd = "$OutputEncoding = [Console]::InputEncoding = [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding;"
-            # self._process.stdin.write((init_cmd + "\n").encode("utf-8"))
-            # await self._process.stdin.drain()
-            # try:
-            #     self._process.stdout._buffer.clear()
-            #     self._process.stderr._buffer.clear()
-            # except Exception:
-            #     pass
+            self._process = await self._get_powershell_process()
 
     async def stop(self):
         if not self._process:
             return
 
         try:
-            if self._process.stdin:
-                self._process.stdin.close()
             self._process.terminate()
-            await self._process.wait()
-            logger.info("Bash terminal terminated successfully.")
+            await asyncio.wait_for(self._process.communicate(), timeout=5.0)
         except asyncio.TimeoutError:
-            logger.error("Bash terminal termination timed out.")
             try:
                 self._process.kill()
-                await self._process.wait()
-                logger.info("Bash terminal killed successfully.")
+                await asyncio.wait_for(self._process.communicate(), timeout=5.0)
             except asyncio.TimeoutError:
-                logger.error("Bash terminal kill timed out.")
                 pass
         finally:
             self._process = None
-            # logger.info("Bash terminal process cleaned up.")
 
-    def get_command(self, cmd: str):
-        # logger.info(f"Executing command before: {cmd}")
+    def _get_command(self, cmd: str):
         cmd = cmd.strip()
         if not cmd.endswith(";"):
             cmd += ";"
         cmd += f" echo '{self._delimiter}'\n"
-        # logger.info(f"Executing command after: {cmd.strip()}")
         return cmd
+
+    def _decode_buffer(self, buffer: bytes):
+        try:
+            return buffer.decode("utf-8")
+        except Exception:
+            return buffer.decode("utf-8", errors="replace")
 
     async def run(self, cmd: str):
         if not self._process:
@@ -93,7 +86,7 @@ class BashTerminal:
         output = ""
         stderr = ""
 
-        self._process.stdin.write(self.get_command(cmd).encode("utf-8"))
+        self._process.stdin.write(self._get_command(cmd).encode("utf-8"))
         await self._process.stdin.drain()
 
         try:
@@ -102,19 +95,8 @@ class BashTerminal:
                 while True:
                     await asyncio.sleep(self._output_delay)
 
-                    try:
-                        output = self._process.stdout._buffer.decode("utf-8")
-                    except Exception:
-                        output = self._process.stdout._buffer.decode(
-                            "utf-8", errors="replace"
-                        )
-
-                    try:
-                        stderr = self._process.stderr._buffer.decode("utf-8")
-                    except Exception:
-                        stderr = self._process.stderr._buffer.decode(
-                            "utf-8", errors="replace"
-                        )
+                    output += self._decode_buffer(self._process.stdout._buffer)
+                    stderr += self._decode_buffer(self._process.stderr._buffer)
 
                     if stderr:
                         break
@@ -124,7 +106,6 @@ class BashTerminal:
                         break
 
         except Exception as e:
-            logger.error(f"Execute command: {cmd} with error: {e}")
             if not stderr:
                 stderr = f"{e}"
 
@@ -144,23 +125,10 @@ if __name__ == "__main__":
 
     async def main():
         terminal = BashTerminal()
-        # terminal = PowerShellTerminal(cwd=initial_dir)
         try:
-            # res = await terminal.run("pwd")
-            # print(res)
-            # res = await terminal.run("ls")
-            # print(res)
-            # res = await terminal.run("cd ..")
-            # print(res)
-            # res = await terminal.run("pwd && ls -la")
-            # print(res)
-            # res = await terminal.run("tree /F")
-            res = await terminal.run("cat src/utils/log.py")
+            res = await terminal.run("ls")
             print(res)
         finally:
             await terminal.stop()
-            # pass
 
     asyncio.run(main())
-
-    print("--- Test Completed ---")
