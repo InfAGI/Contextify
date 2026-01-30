@@ -3,6 +3,7 @@ from typing import List, Dict, Optional
 from fastmcp import Client
 from src.config.config import DefaultConfig
 from src.tools.base import Tool, ToolResult
+from src.utils.loop import run_async_in_thread
 
 
 class MCPTools:
@@ -65,20 +66,7 @@ class MCPTools:
                 return await self.client.list_tools()
 
         try:
-            # Check if there is a running event loop
-            try:
-                loop = asyncio.get_running_loop()
-            except RuntimeError:
-                loop = None
-
-            if loop and loop.is_running():
-                # If we are in a running loop, run in a separate thread
-                import concurrent.futures
-
-                with concurrent.futures.ThreadPoolExecutor() as executor:
-                    tools = executor.submit(asyncio.run, _list_tools()).result()
-            else:
-                tools = asyncio.run(_list_tools())
+            tools = run_async_in_thread(_list_tools)
         except Exception:
             return []
 
