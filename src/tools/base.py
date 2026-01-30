@@ -162,18 +162,20 @@ class Tool(ABC):
             result.error = f"Executing the tool `{tool_call.tool_name}` with args `{tool_call.tool_args}` failed: {str(e)}"
             return result
 
-    async def _execute(self, args: Dict) -> ToolResult:
+    async def _execute(self, **kwargs) -> ToolResult:
         """
         Execute the tool with the given arguments.
 
         Args:
-            args (Dict): The arguments for the tool execution.
+            **kwargs: The arguments for the tool execution.
 
         Returns:
             ToolResult: The result of the tool execution.
         """
         if self.callback:
-            return self.callback(args)
+            if asyncio.iscoroutinefunction(self.callback):
+                return await self.callback(kwargs)
+            return self.callback(kwargs)
         raise NotImplementedError("Must implement _execute method")
 
     async def close(self):

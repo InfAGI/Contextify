@@ -39,6 +39,15 @@ class ToolExecutor:
         res = await asyncio.gather(*tasks)
         return res
 
+    def get_tool_schemas(self) -> List[Dict]:
+        """
+        Get the schemas of all registered tools.
+
+        Returns:
+            List[Dict]: A list of dictionaries, each containing the schema of a tool.
+        """
+        return [tool.json_definition() for tool in self._tools]
+
     async def execute_tool_call(self, tool_call: ToolCall) -> ToolResult:
         """
         Execute a single tool call.

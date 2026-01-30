@@ -26,3 +26,5 @@ if __name__ == "__main__":
     print(DefaultConfig.get("providers", "deepseek", "api_key"))
     print(DefaultConfig.deepseek_base_url)
     print(DefaultConfig.deepseek_api_key)
+    print(DefaultConfig.deepseek_reasoning_model)
+    print(DefaultConfig.mcp_servers)

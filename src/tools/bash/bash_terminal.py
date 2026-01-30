@@ -112,13 +112,7 @@ class BashTerminal:
         self._process.stdout._buffer.clear()
         self._process.stderr._buffer.clear()
 
-        return str(
-            {
-                "command": cmd,
-                "stdout": output,
-                "stderr": stderr,
-            }
-        )
+        return output.strip(), stderr.strip()
 
 
 if __name__ == "__main__":
@@ -126,7 +120,9 @@ if __name__ == "__main__":
     async def main():
         terminal = BashTerminal()
         try:
-            res = await terminal.run("ls")
+            # res = await terminal.run("ls")
+            res = await terminal.run("docker --version")
+            # res = await terminal.run("echo $Env:PATH")
             print(res)
         finally:
             await terminal.stop()

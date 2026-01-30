@@ -1,53 +1,102 @@
 from pydantic import BaseModel, Field
-import asyncio
+from typing import override
 
-from src.tools.tool import ToolSpec
+from src.tools.base import Tool, ToolResult
 from src.tools.bash.bash_terminal import BashTerminal
 
 
 class BashArgs(BaseModel):
     command: str = Field(description="The bash command to execute.")
+    restart: bool = Field(
+        default=False, description="Set to true to restart the bash session."
+    )
 
 
-class BashTool:
+class BashTool(Tool):
 
     def __init__(self, cwd: str = None):
         self._terminal = BashTerminal(cwd)
-        self._loop = asyncio.new_event_loop()
+        super().__init__(
+            name="bash",
+            description="Executes a given bash command in a persistent shell session and returns the stdout and stderr.",
+            parameters=BashArgs,
+        )
 
-    def deinit(self):
-        try:
-            self._loop.run_until_complete(self._terminal.stop())
-        finally:
-            self._loop.close()
+    @override
+    async def close(self):
+        await self._terminal.stop()
 
-    def execute(self, command: str):
-        return self._loop.run_until_complete(self._terminal.run(command))
+    @override
+    async def _execute(self, command: str, restart: bool = False) -> ToolResult:
+        if restart and self._terminal:
+            await self._terminal.stop()
 
-    def get_spec(self):
-        return ToolSpec(
-            tool_name="bash",
-            tool_desc="Executes a given bash command in a persistent shell session and returns the stdout and stderr.",
-            tool_args=BashArgs,
-            tool_callback=self.execute,
+        output, stderr = await self._terminal.run(command)
+
+        return ToolResult(
+            output=output,
+            error=stderr,
+            success=not stderr,
         )
 
 
 if __name__ == "__main__":
-    from src.tools.tool_registry import ToolRegistry
-    from src.tools.tool import ToolCall
+    import asyncio
+    from src.tools.registry import ToolRegistry
+    from src.tools.base import ToolCall
 
-    tool = BashTool()
-    tool_spec = tool.get_spec()
-    tool_registry = ToolRegistry()
-    tool_registry.add_tool(tool_spec)
+    async def main():
+        tool = BashTool()
+        # registry expects a list of Tool instances
+        tool_registry = ToolRegistry(tools=[tool])
 
-    # res = tool_registry.execute_tool(
-    #     ToolCall(tool_name="bash", tool_args='{"command":"pwd"}')
-    # )
-    res = tool_registry.execute_tool(
-        ToolCall(tool_name="bash", tool_args='{"command":"cat src/utils/log.py"}')
-    )
-    print(res)
+        # Test 1: Simple echo command
+        print("-" * 50)
+        print("Test 1: Simple echo command")
+        res = await tool_registry.execute_tool_call(
+            ToolCall(tool_name="bash", tool_args='{"command":"echo \'Hello, World!\'"}')
+        )
+        print(res)
 
-    tool.deinit()
+        # Test 2: List directory contents
+        # Note: On Windows PowerShell, 'ls -la' might fail, using 'ls' or 'dir'
+        print("\n" + "-" * 50)
+        print("Test 2: List directory contents")
+        res = await tool_registry.execute_tool_call(
+            ToolCall(tool_name="bash", tool_args='{"command":"dir"}')
+        )
+        print(res)
+
+        # Test 3: Check current working directory
+        print("\n" + "-" * 50)
+        print("Test 3: Check current working directory")
+        res = await tool_registry.execute_tool_call(
+            ToolCall(tool_name="bash", tool_args='{"command":"pwd"}')
+        )
+        print(res)
+
+        # Test 4: Error handling (file not found)
+        print("\n" + "-" * 50)
+        print("Test 4: Error handling")
+        res = await tool_registry.execute_tool_call(
+            ToolCall(
+                tool_name="bash", tool_args='{"command":"cat non_existent_file.txt"}'
+            )
+        )
+        print(res)
+
+        # Test 5: Restart session
+        print("\n" + "-" * 50)
+        print("Test 5: Restart session")
+        res = await tool_registry.execute_tool_call(
+            ToolCall(
+                tool_name="bash",
+                tool_args='{"command":"echo \'Restarting session...\'", "restart":true}',
+            )
+        )
+        print(res)
+
+        # Cleanup
+        await tool_registry.close_tools()
+
+    asyncio.run(main())
