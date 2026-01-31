@@ -16,6 +16,11 @@ class Config(ConfigParser):
         self.deepseek_reasoning_model = self.get(
             "providers", "deepseek", "reasoning_model"
         )
+        self.anthropic_base_url = self.get("providers", "anthropic", "base_url")
+        self.anthropic_api_key = self.get("providers", "anthropic", "api_key")
+        self.anthropic_reasoning_model = self.get(
+            "providers", "anthropic", "reasoning_model"
+        )
         self.mcp_servers = self.get("mcpServers")
 
 
