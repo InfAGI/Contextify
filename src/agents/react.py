@@ -45,9 +45,14 @@ if __name__ == "__main__":
     from src.tools.bash.bash_tool import BashTool
     from src.tools.text.view_tool import ViewTool
     from src.tools.text.edit_tool import CreateFileTool, InsertFileTool, ReplaceFileTool
+
     from src.llms.anthropic import (
         get_anthropic_client,
         get_anthropic_response_with_cache,
+    )
+    from src.llms.deepseek import (
+        get_deepseek_client,
+        get_deepseek_response_with_cache,
     )
 
     async def main():
@@ -63,8 +68,10 @@ if __name__ == "__main__":
         )
         agent = Agent(
             tools=tool_registry,
-            client=get_anthropic_client(),
-            invoke=get_anthropic_response_with_cache,
+            # client=get_anthropic_client(),
+            # invoke=get_anthropic_response_with_cache,
+            client=get_deepseek_client(),
+            invoke=get_deepseek_response_with_cache,
         )
         agent.append_user_message(
             """为该仓库生成compose.yaml文件并用docker部署. C:\\Users\\hylnb\\Workspace\\deploy\\valuecell"""

@@ -32,6 +32,7 @@ class ShortTermMemoryManager:
         self.agent.messages = [self.agent.messages[0]] + [
             {
                 "role": "assistant",
+                "reasoning_content": "...",
                 "content": result,
             }
         ]
