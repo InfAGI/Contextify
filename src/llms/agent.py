@@ -1,12 +1,9 @@
 import json
-from src.llms.deepseek import (
-    get_deepseek_client,
-    get_deepseek_response,
-)
-from src.tools.tool_registry import ToolRegistry
+from src.llms.deepseek import get_deepseek_client, get_deepseek_response
+from src.tools.registry import ToolRegistry
 from src.utils.util import num_tokens
 from src.utils.log import logger
-from src.tools.tool import ToolCall
+from src.tools.base import ToolCall
 
 
 class Agent:
@@ -29,7 +26,7 @@ class Agent:
         if tools:
             self.tools = tools
         else:
-            self.tools = ToolRegistry([])
+            self.tools = ToolRegistry(tools=[], include_mcp_tools=False)
 
     def calc_token_nums(self):
         token_nums = 0
@@ -54,7 +51,7 @@ class Agent:
         self.messages.append({"role": "user", "content": input})
         logger.info(f"Agent received input: {input}\n")
 
-    def invoke(self, input=None):
+    async def invoke(self, input=None):
         if input:
             self.append_user_message(input)
 
@@ -64,15 +61,30 @@ class Agent:
             tools=self.tools.get_tool_schemas(),
         )
 
-        reasoning_content = response.choices[0].message.reasoning_content
-        content = response.choices[0].message.content
-        tool_calls = response.choices[0].message.tool_calls
-
         message = {
             "role": "assistant",
-            "reasoning_content": reasoning_content,
-            "content": content,
         }
+        if hasattr(response.choices[0].message, "content"):
+            if response.choices[0].message.content:
+                content = response.choices[0].message.content
+                message["content"] = content
+            else:
+                content = None
+
+        if hasattr(response.choices[0].message, "reasoning_content"):
+            reasoning_content = response.choices[0].message.reasoning_content
+            message["reasoning_content"] = reasoning_content
+        else:
+            reasoning_content = None
+
+        if hasattr(response.choices[0].message, "tool_calls"):
+            if response.choices[0].message.tool_calls:
+                tool_calls = response.choices[0].message.tool_calls
+            else:
+                tool_calls = None
+        else:
+            tool_calls = None
+
         if tool_calls:
             message["tool_calls"] = [
                 {
@@ -94,10 +106,13 @@ class Agent:
         if tool_calls:
             logger.info(f"Agent produced tool_calls: {tool_calls}")
             for tool_call in tool_calls:
-                tool_result = self.tools.execute_tool(
-                    ToolCall(
-                        tool_name=tool_call.function.name,
-                        tool_args=tool_call.function.arguments,
+                tool_result = str(
+                    await self.tools.execute_tool_call(
+                        ToolCall(
+                            id=tool_call.id,
+                            tool_name=tool_call.function.name,
+                            tool_args=tool_call.function.arguments,
+                        )
                     )
                 )
 
@@ -132,12 +147,27 @@ class Agent:
 
 
 if __name__ == "__main__":
+    import asyncio
+
     from src.tools.bash.bash_tool import BashTool
+    from src.tools.text.view_tool import ViewTool
+    from src.tools.text.edit_tool import CreateFileTool, InsertFileTool, ReplaceFileTool
 
-    bash_tool = BashTool()
-    tool_kit = ToolRegistry([bash_tool.get_spec()])
-    agent = Agent(tools=tool_kit)
-    agent.invoke("查看一下当前工作空间的目录结构")
-    agent.print_history()
+    async def main():
+        tool_registry = ToolRegistry(
+            [
+                BashTool(cwd="C:\\Users\\hylnb\\Workspace\\deploy\\valuecell"),
+                ViewTool(),
+                CreateFileTool(),
+                InsertFileTool(),
+                ReplaceFileTool(),
+            ]
+        )
+        agent = Agent(tools=tool_registry)
+        await agent.invoke(
+            "查看一下当前工作空间的目录结构.C:\\Users\\hylnb\\Workspace\\deploy\\valuecell"
+        )
+        agent.print_history()
+        await tool_registry.close_tools()
 
-    bash_tool.deinit()
+    asyncio.run(main())

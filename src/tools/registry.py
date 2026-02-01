@@ -2,9 +2,7 @@ from typing import Optional, List
 from src.tools.base import Tool
 from src.tools.executor import ToolExecutor
 from src.tools.mcp_tool import MCPTools
-from src.tools.bash.bash_tool import BashTool
-from src.tools.text.view_tool import ViewTool
-from src.tools.text.edit_tool import CreateFileTool, InsertFileTool, ReplaceFileTool
+
 
 
 class ToolRegistry(ToolExecutor):
@@ -14,19 +12,8 @@ class ToolRegistry(ToolExecutor):
         tools: Optional[List[Tool]] = [],
         include_tools: List[str] = [],
         exclude_tools: List[str] = [],
-        workspace: Optional[str] = None,
         include_mcp_tools: bool = True,
     ):
-        tools.extend(
-            [
-                BashTool(workspace),
-                ViewTool(),
-                CreateFileTool(),
-                InsertFileTool(),
-                ReplaceFileTool(),
-            ]
-        )
-
         if include_mcp_tools:
             tools.extend(MCPTools().list_tools())
 
@@ -49,7 +36,7 @@ if __name__ == "__main__":
         registry = ToolRegistry(include_mcp_tools=False)
         print("Tool Schemas:")
         print(json.dumps(registry.get_tool_schemas(), indent=4))
-        print("\n" + "="*50 + "\n")
+        print("\n" + "=" * 50 + "\n")
 
         # 1. Test BashTool
         print("Testing BashTool...")
@@ -64,11 +51,10 @@ if __name__ == "__main__":
         print(f"Testing CreateFileTool ({test_file})...")
         res = await registry.execute_tool_call(
             ToolCall(
-                tool_name="create_file", 
-                tool_args=json.dumps({
-                    "file_path": test_file,
-                    "file_text": "Line 1\nLine 2\nLine 3"
-                })
+                tool_name="create_file",
+                tool_args=json.dumps(
+                    {"file_path": test_file, "file_text": "Line 1\nLine 2\nLine 3"}
+                ),
             )
         )
         print(f"Result: {res.output}")
@@ -77,12 +63,7 @@ if __name__ == "__main__":
         # 3. Test ViewTool
         print("Testing ViewTool...")
         res = await registry.execute_tool_call(
-            ToolCall(
-                tool_name="view",
-                tool_args=json.dumps({
-                    "path": test_file
-                })
-            )
+            ToolCall(tool_name="view", tool_args=json.dumps({"path": test_file}))
         )
         print(f"Result:\n{res.output}")
         print("-" * 20)
@@ -92,15 +73,17 @@ if __name__ == "__main__":
         res = await registry.execute_tool_call(
             ToolCall(
                 tool_name="replace_file",
-                tool_args=json.dumps({
-                    "file_path": test_file,
-                    "old_content": "Line 2",
-                    "new_content": "Line 2 (Modified)"
-                })
+                tool_args=json.dumps(
+                    {
+                        "file_path": test_file,
+                        "old_content": "Line 2",
+                        "new_content": "Line 2 (Modified)",
+                    }
+                ),
             )
         )
         print(f"Result: {res.output}")
-        
+
         # Verify modification
         res = await registry.execute_tool_call(
             ToolCall(tool_name="view", tool_args=json.dumps({"path": test_file}))
@@ -113,11 +96,13 @@ if __name__ == "__main__":
         res = await registry.execute_tool_call(
             ToolCall(
                 tool_name="insert_file",
-                tool_args=json.dumps({
-                    "file_path": test_file,
-                    "insert_line": 3,
-                    "file_text": "Line 4 (Inserted)"
-                })
+                tool_args=json.dumps(
+                    {
+                        "file_path": test_file,
+                        "insert_line": 3,
+                        "file_text": "Line 4 (Inserted)",
+                    }
+                ),
             )
         )
         print(f"Result: {res.output}")
@@ -137,9 +122,7 @@ if __name__ == "__main__":
                 print(f"Removed {test_file}")
         except Exception as e:
             print(f"Error removing file: {e}")
-        
+
         await registry.close_tools()
 
     asyncio.run(main())
-
-    

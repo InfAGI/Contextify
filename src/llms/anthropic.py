@@ -1,6 +1,7 @@
 from openai import OpenAI
 
 from src.config.config import DefaultConfig
+from src.llms.cache import get_response_with_cache
 
 
 def get_anthropic_client(
@@ -32,9 +33,34 @@ def get_anthropic_response(
     return response
 
 
+def get_anthropic_response_with_cache(
+    client,
+    messages: list,
+    tools: list,
+    invoke=get_anthropic_response,
+    cache_path: str = ".cache/anthropic/",
+    **kwargs,
+):
+    response = get_response_with_cache(
+        client,
+        invoke,
+        messages=messages,
+        tools=tools,
+        cache_path=cache_path,
+        **kwargs,
+    )
+    return response
+
+
 if __name__ == "__main__":
     client = get_anthropic_client()
-    response = get_anthropic_response(
+    # response = get_anthropic_response(
+    #     client,
+    #     messages=[{"role": "user", "content": "你好"}],
+    #     tools=[],
+    # )
+    # print(response)
+    response = get_anthropic_response_with_cache(
         client,
         messages=[{"role": "user", "content": "你好"}],
         tools=[],
