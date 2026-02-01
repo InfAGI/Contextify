@@ -12,12 +12,17 @@ def read_raw_file(file_path: Path):
     return raw_data.decode(encoding, errors="replace").expandtabs()
 
 
-def read_file(file_path: Path, start_line: int = 1, end_line: int = -1):
+def read_file(
+    file_path: Path, start_line: int = 1, end_line: int = -1, max_lines: int = 500
+):
     content = read_raw_file(file_path)
 
     lines = content.splitlines()
     start_line = max(1, start_line)
     end_line = min(len(lines), end_line) if end_line != -1 else len(lines)
+
+    if end_line - start_line + 1 > max_lines:
+        end_line = start_line + max_lines - 1
 
     range_content = ""
     for i in range(start_line - 1, end_line):

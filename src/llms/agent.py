@@ -1,4 +1,5 @@
 import json
+import copy
 from src.llms.deepseek import get_deepseek_client, get_deepseek_response
 from src.tools.registry import ToolRegistry
 from src.utils.util import num_tokens
@@ -27,6 +28,14 @@ class Agent:
             self.tools = tools
         else:
             self.tools = ToolRegistry(tools=[], include_mcp_tools=False)
+
+    def fork(self, tools: ToolRegistry = None):
+        return Agent(
+            client=self._client,
+            invoke=self._invoke,
+            messages=copy.deepcopy(self.messages),
+            tools=tools,
+        )
 
     def calc_token_nums(self):
         token_nums = 0

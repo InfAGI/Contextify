@@ -8,7 +8,8 @@ from src.tools.bash.bash_terminal import BashTerminal
 class BashArgs(BaseModel):
     command: str = Field(description="The bash command to execute.")
     restart: bool = Field(
-        default=False, description="Set to true to restart the bash session."
+        default=False,
+        description="Whether to restart the bash session. Default is False, meaning the session will be persistent.",
     )
 
 
@@ -32,6 +33,12 @@ class BashTool(Tool):
             await self._terminal.stop()
 
         output, stderr = await self._terminal.run(command)
+
+        # 判断长度，如果长度超过16000, 只保留最后16000个字符
+        if len(output) > 16000:
+            output = output[-16000:]
+        if len(stderr) > 16000:
+            stderr = stderr[-16000:]
 
         return ToolResult(
             output=output,

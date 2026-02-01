@@ -1,12 +1,16 @@
 from src.llms.agent import Agent
 from src.utils.log import logger
 from src.tools.registry import ToolRegistry
+from src.tools.text.view_tool import ViewTool
+from src.tools.text.edit_tool import CreateFileTool, InsertFileTool, ReplaceFileTool
+from src.tools.compact.short_term_memory import ShortTermMemoryManager
 
 
 class ReAct:
 
     def __init__(self, agent: Agent):
         self.agent = agent
+        self.memory_manager = ShortTermMemoryManager(agent)
 
     async def solve(self, debug=False, max_input_tokens=64 * 1024, feedback=False):
 
@@ -16,7 +20,7 @@ class ReAct:
                 logger.warning(
                     f"Token nums {token_nums} exceeds max input tokens {max_input_tokens}"
                 )
-                # self.report()
+                await self.memory_manager.summarize()
 
             self.agent.print_history()
             logger.info(f"Token nums: {token_nums}")
@@ -62,12 +66,12 @@ if __name__ == "__main__":
             client=get_anthropic_client(),
             invoke=get_anthropic_response_with_cache,
         )
-        # agent.append_user_message(
-        #     """为该仓库生成compose.yaml文件并用docker部署. C:\\Users\\hylnb\\Workspace\\deploy\\valuecell"""
-        # )
         agent.append_user_message(
-            """深度调研一下这个代码仓库. C:\\Users\\hylnb\\Workspace\\deploy\\valuecell"""
+            """为该仓库生成compose.yaml文件并用docker部署. C:\\Users\\hylnb\\Workspace\\deploy\\valuecell"""
         )
+        # agent.append_user_message(
+        #     """深度调研一下这个代码仓库. C:\\Users\\hylnb\\Workspace\\deploy\\valuecell"""
+        # )
         react = ReAct(agent=agent)
         try:
             await react.solve(debug=False)
