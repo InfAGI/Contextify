@@ -21,13 +21,28 @@ class InsertFileArgs(BaseModel):
     )
 
 
+# class ReplaceFileArgs(BaseModel):
+#     file_path: str = Field(description="Absolute path to file, e.g. `/repo/file.py`.")
+#     old_content: str = Field(
+#         description="The old content to be replaced in `file_path`."
+#     )
+#     new_content: str = Field(
+#         description="The new content to replace the `old_content` in `file_path`.",
+#     )
+
+
 class ReplaceFileArgs(BaseModel):
     file_path: str = Field(description="Absolute path to file, e.g. `/repo/file.py`.")
-    old_content: str = Field(
-        description="The old content to be replaced in `file_path`."
+    start_line: int = Field(
+        default=1,
+        description="The start line number to replace from. 1 means the first line.",
+    )
+    end_line: int = Field(
+        default=-1,
+        description="The end line number to replace to. -1 means the last line.",
     )
     new_content: str = Field(
-        description="The new content to replace the `old_content` in `file_path`.",
+        description="The new content to replace the content between `start_line` and `end_line` in `file_path`.",
     )
 
 
@@ -87,13 +102,22 @@ class ReplaceFileTool(Tool):
             parameters=ReplaceFileArgs,
         )
 
+    # @override
+    # async def _execute(
+    #     self, file_path: str, old_content: str, new_content: str
+    # ) -> ToolResult:
+    #     file_path = Path(file_path)
+    #     return ToolResult(
+    #         output=replace_file(file_path, old_content, new_content),
+    #         success=True,
+    #     )
     @override
     async def _execute(
-        self, file_path: str, old_content: str, new_content: str
+        self, file_path: str, start_line: int, end_line: int, new_content: str
     ) -> ToolResult:
         file_path = Path(file_path)
         return ToolResult(
-            output=replace_file(file_path, old_content, new_content),
+            output=replace_file(file_path, start_line, end_line, new_content),
             success=True,
         )
 
@@ -125,7 +149,8 @@ if __name__ == "__main__":
         run_async_in_thread(
             replace_tool._execute,
             file_path="test/test.py",
-            old_content="print('Hello, World!xxxx')",
+            start_line=1,
+            end_line=1,
             new_content="print('Hello, World!yyyy')",
         )
     )

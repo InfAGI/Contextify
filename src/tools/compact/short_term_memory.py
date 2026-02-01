@@ -29,14 +29,15 @@ class ShortTermMemoryManager:
         agent = self.agent.fork(tools=self.tools)
         agent.append_user_message(prompt)
         result = await self.solve(agent)
-        self.agent.messages = [self.agent.messages[0]] + [
+        self.agent.messages = [self.agent.messages[0]]
+        self.agent.append_message(
             {
                 "role": "assistant",
                 "reasoning_content": "...",
                 "content": result,
             }
-        ]
-        self.agent.print_history()
+        )
+        # self.agent.print_history()
 
 
 if __name__ == "__main__":

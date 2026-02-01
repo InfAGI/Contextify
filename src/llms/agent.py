@@ -5,6 +5,7 @@ from src.tools.registry import ToolRegistry
 from src.utils.util import num_tokens
 from src.utils.log import logger
 from src.tools.base import ToolCall
+from src.utils.tracer import Tracer
 
 
 class Agent:
@@ -15,9 +16,11 @@ class Agent:
         invoke=get_deepseek_response,
         messages: list = None,
         tools: ToolRegistry = None,
+        tracer: Tracer = None,
     ):
         self._client = client
         self._invoke = invoke
+        self._tracer = tracer
 
         if messages:
             self.messages = messages
@@ -59,6 +62,13 @@ class Agent:
     def append_user_message(self, input):
         self.messages.append({"role": "user", "content": input})
         logger.info(f"Agent received input: {input}\n")
+        if self._tracer:
+            self._tracer.trace({"role": "user", "content": input})
+
+    def append_message(self, msg):
+        self.messages.append(msg)
+        if self._tracer:
+            self._tracer.trace(msg)
 
     async def invoke(self, input=None):
         if input:
@@ -106,7 +116,7 @@ class Agent:
                 }
                 for tool_call in tool_calls
             ]
-        self.messages.append(message)
+        self.append_message(message)
         logger.info(f"Agent produced response: {message}")
 
         if reasoning_content:
@@ -125,7 +135,7 @@ class Agent:
                     )
                 )
 
-                self.messages.append(
+                self.append_message(
                     {
                         "role": "tool",
                         "tool_call_id": tool_call.id,
@@ -172,7 +182,7 @@ if __name__ == "__main__":
                 ReplaceFileTool(),
             ]
         )
-        agent = Agent(tools=tool_registry)
+        agent = Agent(tools=tool_registry, tracer=Tracer(".cache/trace/tracer.txt"))
         await agent.invoke(
             "查看一下当前工作空间的目录结构.C:\\Users\\hylnb\\Workspace\\deploy\\valuecell"
         )

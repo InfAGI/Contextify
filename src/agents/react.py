@@ -68,10 +68,10 @@ if __name__ == "__main__":
         )
         agent = Agent(
             tools=tool_registry,
-            # client=get_anthropic_client(),
-            # invoke=get_anthropic_response_with_cache,
-            client=get_deepseek_client(),
-            invoke=get_deepseek_response_with_cache,
+            client=get_anthropic_client(),
+            invoke=get_anthropic_response_with_cache,
+            # client=get_deepseek_client(),
+            # invoke=get_deepseek_response_with_cache,
         )
         agent.append_user_message(
             """为该仓库生成compose.yaml文件并用docker部署. C:\\Users\\hylnb\\Workspace\\deploy\\valuecell"""
@@ -81,7 +81,7 @@ if __name__ == "__main__":
         # )
         react = ReAct(agent=agent)
         try:
-            await react.solve(debug=False)
+            await react.solve(debug=False, feedback=True)
         finally:
             await tool_registry.close_tools()
 
