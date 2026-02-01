@@ -1,4 +1,5 @@
 from pathlib import Path
+from src.tools.text.read_file import read_raw_file
 from src.tools.text.write_file import write_file
 
 
@@ -7,7 +8,8 @@ def insert_file(
     new_content: str,
     insert_line: int = -1,
 ):
-    old_content = file_path.read_text().expandtabs()
+    old_content = read_raw_file(file_path)
+
     new_content = new_content.expandtabs()
     lines = old_content.splitlines()
 

@@ -4,7 +4,7 @@ from pathlib import Path
 
 def write_file(file_path: Path, old_content: str, new_content: str):
     new_content = new_content.expandtabs()
-    file_path.write_text(new_content)
+    file_path.write_text(new_content, encoding="utf-8")
     diff = difflib.unified_diff(
         old_content.splitlines(),
         new_content.splitlines(),

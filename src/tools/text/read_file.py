@@ -2,15 +2,18 @@ from pathlib import Path
 from charset_normalizer import from_bytes
 
 
-def read_file(file_path: Path, start_line: int = 1, end_line: int = -1):
+def read_raw_file(file_path: Path):
     raw_data = file_path.read_bytes()
     result = from_bytes(raw_data).best()
     if result is None:
         encoding = "utf-8"
     else:
         encoding = result.encoding
+    return raw_data.decode(encoding, errors="replace").expandtabs()
 
-    content = file_path.read_text(encoding=encoding, errors="replace").expandtabs()
+
+def read_file(file_path: Path, start_line: int = 1, end_line: int = -1):
+    content = read_raw_file(file_path)
 
     lines = content.splitlines()
     start_line = max(1, start_line)

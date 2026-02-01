@@ -1,4 +1,5 @@
 from pathlib import Path
+from src.tools.text.read_file import read_raw_file
 from src.tools.text.write_file import write_file
 
 
@@ -7,7 +8,8 @@ def replace_file(
     old_str: str,
     new_str: str,
 ):
-    old_content = file_path.read_text().expandtabs()
+    old_content = read_raw_file(file_path)
+
     old_str = old_str.expandtabs()
     new_str = new_str.expandtabs() if new_str else ""
 
