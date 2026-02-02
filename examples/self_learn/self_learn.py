@@ -25,10 +25,10 @@ if __name__ == "__main__":
 
     proj_path = [
         # "C:\\Users\\hylnb\\Workspace\\deploy_benchmark\\open-webui",
-        "C:\\Users\\hylnb\\Workspace\\deploy_benchmark\\MoneyPrinterTurbo",
-        "C:\\Users\\hylnb\\Workspace\\deploy_benchmark\\banana-slides",
-        "C:\\Users\\hylnb\\Workspace\\deploy_benchmark\\NarratoAI",
-        "C:\\Users\\hylnb\\Workspace\\deploy_benchmark\\DeepTutor",
+        # "C:\\Users\\hylnb\\Workspace\\deploy_benchmark\\MoneyPrinterTurbo",
+        # "C:\\Users\\hylnb\\Workspace\\deploy_benchmark\\banana-slides",
+        # "C:\\Users\\hylnb\\Workspace\\deploy_benchmark\\NarratoAI",
+        # "C:\\Users\\hylnb\\Workspace\\deploy_benchmark\\DeepTutor",
         "C:\\Users\\hylnb\\Workspace\\deploy_benchmark\\BiliNote",
         "C:\\Users\\hylnb\\Workspace\\deploy_benchmark\\AionUi",
         "C:\\Users\\hylnb\\Workspace\\deploy_benchmark\\AI-Media2Doc",
