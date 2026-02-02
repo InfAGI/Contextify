@@ -117,7 +117,7 @@ if __name__ == "__main__":
                     tracer=Tracer(trace_path),
                 )
                 agent.append_user_message(
-                    f"""<SKILL>{skill_content}</SKILL>为该仓库生成compose.yaml文件并用docker部署. C:\\Users\\hylnb\\Workspace\\deploy\\valuecell"""
+                    f"""<SKILL>{skill_content}</SKILL>为该仓库生成compose.yaml文件并用docker部署. {proj}"""
                 )
                 # agent.append_user_message(
                 #     """找到代码仓库的运行入口. C:\\Users\\hylnb\\Workspace\\deploy\\valuecell"""
