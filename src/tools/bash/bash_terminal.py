@@ -9,7 +9,7 @@ class BashTerminal:
         cwd: str = None,
         delimiter: str = f"<terminal-command-exit-{os.urandom(4).hex()}>",
         output_delay: float = 0.2,
-        output_timeout: int = 60 * 10,
+        output_timeout: int = 60 * 3,
     ):
         self._cwd = cwd
         self._delimiter = delimiter

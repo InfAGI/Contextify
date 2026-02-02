@@ -32,7 +32,7 @@ Based on execution progress, answer the following questions:
 
 2. Documentation
 
-Distill improved step-by-step SOP into the SKILL.md file (create or update).</SKILL>"""
+Distill improved step-by-step SOP into the SKILL.md file (create or update). Note that the SOP should be general methodology that can be applied to other similar tasks rather than specific to the current task.</SKILL>"""
     + "The experience file is {experience_file}. The skill file is {skill_file}."
 )
 
