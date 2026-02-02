@@ -41,10 +41,12 @@ class ReAct:
 
 if __name__ == "__main__":
     import asyncio
+    import uuid
 
     from src.tools.bash.bash_tool import BashTool
     from src.tools.text.view_tool import ViewTool
     from src.tools.text.edit_tool import CreateFileTool, InsertFileTool, ReplaceFileTool
+    from src.tools.plan.todo_tool import TodoTool
 
     from src.llms.anthropic import (
         get_anthropic_client,
@@ -63,6 +65,7 @@ if __name__ == "__main__":
                 CreateFileTool(),
                 InsertFileTool(),
                 ReplaceFileTool(),
+                TodoTool(session_id=uuid.uuid4().hex),
             ],
             include_mcp_tools=False,
         )
@@ -73,15 +76,15 @@ if __name__ == "__main__":
             # client=get_deepseek_client(),
             # invoke=get_deepseek_response_with_cache,
         )
-        agent.append_user_message(
-            """为该仓库生成compose.yaml文件并用docker部署. C:\\Users\\hylnb\\Workspace\\deploy\\valuecell"""
-        )
         # agent.append_user_message(
-        #     """深度调研一下这个代码仓库. C:\\Users\\hylnb\\Workspace\\deploy\\valuecell"""
+        #     """为该仓库生成compose.yaml文件并用docker部署. C:\\Users\\hylnb\\Workspace\\deploy\\valuecell"""
         # )
+        agent.append_user_message(
+            """深度调研一下这个代码仓库. C:\\Users\\hylnb\\Workspace\\deploy\\valuecell。必须使用TODO工具递归分解任务，直到每个小任务都足够简单"""
+        )
         react = ReAct(agent=agent)
         try:
-            await react.solve(debug=False, feedback=True)
+            await react.solve(debug=True, feedback=True)
         finally:
             await tool_registry.close_tools()
 

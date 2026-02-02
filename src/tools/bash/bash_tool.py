@@ -9,7 +9,7 @@ class BashArgs(BaseModel):
     command: str = Field(description="The bash command to execute.")
     restart: bool = Field(
         default=False,
-        description="Whether to restart the bash session. Default is False, meaning the session will be persistent. Only set to True if occurrence of error.",
+        description="Whether to restart the bash session. Default is False, meaning the session will be persistent.",
     )
 
 

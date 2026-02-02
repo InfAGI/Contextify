@@ -136,6 +136,8 @@ if __name__ == "__main__":
 
                 await meta_learn(trace_path, skill_file)
 
-                input("Press Enter to continue...")
+                res = input("Press Enter to continue... ")
+                if "exit" in res.strip():
+                    break
 
     asyncio.run(main())
